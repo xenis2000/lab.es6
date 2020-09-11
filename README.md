@@ -337,3 +337,196 @@ function checkNumx(...argArray) {
 }
 checkNumx(10,2,3,5,"adf");
 ```
+
+## 객체(Object)
+
+```jsx
+//ES6 이전 버전
+function Health(name) {
+    this.name = name;
+}
+Health.prototype.showHealth = function() {
+    console.log(this.name + "님 안녕하세요!");
+}
+
+const h = new Health("crong");
+h.showHealth();
+
+//ES6
+class HealthX {
+    constructor(name, lastTime) {
+        this.name = name;
+        this.lastTime = lastTime;
+    }
+    showHealth() {
+        console.log("Hi! " + this.name);
+    }
+}
+const hx = new HealthX("crong");
+hx.showHealth();
+//결국 코드만 변경됐을뿐 속성은 function 이다.
+```
+
+Object assign 메서드
+
+javascript 에서 객체를 생성하는 가장 보편적인 방법은 Object.create를 사용하여 prototype을 생성하는 것이다.
+
+```jsx
+const healthObj = {
+    showHealth : function() {
+        console.log(" time : " + this.healthTime);
+    }
+}
+const myHealth = Object.create(healthObj);
+
+myHealth.healthTime = "11:20";
+myHealth.name = "crong";
+
+console.log(myHealth);
+```
+
+Object.assign 을 사용한 개선된 방식
+
+```jsx
+const myHealth = Object.assign(Object.create(healthObj),{
+    healthTime : "11:20",
+    name : "crong"
+});
+```
+
+Object setPrototypeOf
+
+> object.assign : 객체 변수 추가 할당
+object.setPrototypeOf : 객체 메서드 추가 할당
+
+```jsx
+const funcHealthObj = {
+    showHealth : function() {
+        console.log("오늘의 운동시간 : " + this.healthTime);
+    },
+    setHealth : function(newTime) {
+        this.healthTime = newTime;
+    }
+}
+//-------- case 1
+const eleMyHealth = {
+    name : "crong",
+    lastTime : "11:20"
+};
+Object.setPrototypeOf(eleMyHealth, funcHealthObj);
+// ----------- case 2
+const eleMyHealth = Object.setPrototypeOf({
+    name : "crong",
+    lastTime : "11:20"
+}, funcHealthObj);
+
+console.log(eleMyHealth);
+```
+
+setPrototypeOf 를 이용한 prototye chain
+
+```jsx
+const funcHealthObj = {
+    showHealth : function() {
+        console.log("오늘의 운동시간 : " + this.healthTime);
+    },
+    setHealth : function(newTime) {
+        this.healthTime = newTime;
+    }
+}
+//prototype chain
+const funcHealthChildObj = {
+    getAge : function() {
+        return this.age;
+    }
+}
+Object.setPrototypeOf(funcHealthChildObj, funcHealthObj);
+const eleChildObj = Object.setPrototypeOf({
+    age : 22
+}, funcHealthChildObj);
+console.log(eleChildObj);
+// protype path
+// __proto__.__proto__.setHealth
+```
+
+![https://s3-us-west-2.amazonaws.com/secure.notion-static.com/9ab85e77-6f99-4856-9e44-71909143d7fd/Untitled.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/9ab85e77-6f99-4856-9e44-71909143d7fd/Untitled.png)
+
+mutable vs immutable
+
+> mutable : assign 했을 때 참조한 변수값의 값이 변경되면 원본값도 변한다.
+type : List, Dictionary
+
+```jsx
+let x = [1,2,3,4]
+let y = x
+console.log(x, y);
+console.log(x === y)
+// true
+//--------------- x 와 y 는 동일한 참조값으로 y는 x의 메모리를 참조한다.
+y.add(6)
+console.log(x, y);
+console.log(x === y)
+```
+
+> immutable : assign 한 변수값은 새로운 주소값을 가지고 값만 copy 되어 유지 되면 참조한 변수값을 변경하면 원본 값은 유지되면 변수 자체 값만 변경된다.
+type : Number, String, Tuple
+
+```jsx
+let x = 1
+let y = x
+console.log(x)
+console.log(y)
+// x = y
+//--------------- x 와 y 는 동일한 참조값으로 y는 x의 메모리를 참조한다.
+y += 1
+console.log(x)
+console.log(y)
+// x ~= y
+```
+
+## Module
+
+module(export & import) 기반 서비스코드 구현
+
+[개발환경 설정하기](https://www.notion.so/React-UI-Archi-b48141cc74bc4da58d4ba3919b18ed1f)
+
+## Proxy로 interception 구현
+
+Proxy 내장함수 재정의할  수 있음. mutable 데이타
+
+```jsx
+const myObj = {name : "crong", changeValue:0 }
+const proxy = new Proxy(myObj, {
+    // taget => myObj
+    get : function(target, property, receiver) {
+        console.log("get value");
+        //return target[property];
+        //return Reflector.get(target, property);
+        return (property in target) ? target[property] : "anonymous";
+    },
+    // taget => myObj
+    set : function(target, property, value) {
+        console.log("set value");
+        target["changeValue"]++;
+        target[property] = value;
+    }
+})
+
+console.log(proxy.name, myObj.name);
+//result crong, crong
+proxy.name = "xenislab";
+console.log(proxy.name, myObj.name);
+//result xenislab, xenislab
+```
+
+### 개발환경 구축
+
+npm init
+
+npm install webpack —save-dev
+
+webpack.config.js 생성
+
+npm install babel-preset-env —save-dev
+
+npm install webpack-dev-server —save-dev
